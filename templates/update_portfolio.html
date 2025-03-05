@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Portfolio</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .update-form {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        textarea.form-control {
+            min-height: 100px;
+        }
+
+        .project-item {
+            border: 1px solid #ddd;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 4px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 1rem;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+        }
+
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+
+        .flash-messages {
+            margin-bottom: 1rem;
+        }
+
+        .flash-message {
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 4px;
+        }
+
+        .flash-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .flash-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .add-item-btn {
+            margin-top: 0.5rem;
+        }
+
+        .remove-item-btn {
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-content">
+            <div class="logo">
+                <a href="{{ url_for('home') }}">Portfolio</a>
+            </div>
+            <ul class="nav-links">
+                <li><a href="{{ url_for('home') }}#about">About</a></li>
+                <li><a href="{{ url_for('home') }}#projects">Projects</a></li>
+                <li><a href="{{ url_for('home') }}#skills">Skills</a></li>
+                <li><a href="{{ url_for('home') }}#contact">Contact</a></li>
+                <li><a href="{{ url_for('update_portfolio') }}">Update Portfolio</a></li>
+                <li><a href="{{ url_for('change_logs') }}">Change Logs</a></li>
+                <li><a href="{{ url_for('admin_logout') }}">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h2>Update Portfolio</h2>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-container">
+                    {% for category, message in messages %}
+                        <div class="flash-message flash-{{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <form class="update-form" method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="title">Portfolio Title</label>
+                <input type="text" class="form-control" id="title" name="title" value="{{ portfolio.title }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="about">About</label>
+                <textarea class="form-control" id="about" name="about" required>{{ portfolio.about }}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Projects</label>
+                <div id="projects-container">
+                    {% for project in portfolio.projects %}
+                    <div class="project-item">
+                        <input type="text" class="form-control" name="project_title[]" placeholder="Project Title" value="{{ project.title }}" required>
+                        <textarea class="form-control" name="project_description[]" placeholder="Project Description" required>{{ project.description }}</textarea>
+                        <input type="text" class="form-control" name="project_technologies[]" placeholder="Technologies (comma-separated)" value="{{ ','.join(project.technologies) }}" required>
+                        <input type="text" class="form-control" name="project_image[]" placeholder="Image URL" value="{{ project.image }}" required>
+                        <button type="button" class="btn btn-danger remove-item-btn" onclick="removeProject(this)">Remove Project</button>
+                    </div>
+                    {% endfor %}
+                </div>
+                <button type="button" class="btn add-item-btn" onclick="addProject()">Add Project</button>
+            </div>
+
+            <div class="form-group">
+                <label>Skills</label>
+                <div class="form-group">
+                    <label for="programming_languages">Programming Languages (comma-separated)</label>
+                    <input type="text" class="form-control" id="programming_languages" name="programming_languages" value="{{ ','.join(portfolio.skills['Programming Languages']) }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="databases">Databases (comma-separated)</label>
+                    <input type="text" class="form-control" id="databases" name="databases" value="{{ ','.join(portfolio.skills['Databases']) }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="web_technologies">Web Technologies (comma-separated)</label>
+                    <input type="text" class="form-control" id="web_technologies" name="web_technologies" value="{{ ','.join(portfolio.skills['Web Technologies']) }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="devops_tools">DevOps & Tools (comma-separated)</label>
+                    <input type="text" class="form-control" id="devops_tools" name="devops_tools" value="{{ ','.join(portfolio.skills['DevOps & Tools']) }}" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Education</label>
+                <input type="text" class="form-control" name="education_degree" placeholder="Degree" value="{{ portfolio.education.degree }}" required>
+                <input type="text" class="form-control" name="education_institution" placeholder="Institution" value="{{ portfolio.education.institution }}" required>
+                <input type="text" class="form-control" name="education_cgpa" placeholder="CGPA" value="{{ portfolio.education.cgpa }}" required>
+                <input type="text" class="form-control" name="education_duration" placeholder="Duration" value="{{ portfolio.education.duration }}" required>
+            </div>
+
+            <div class="form-group">
+                <label>Achievements</label>
+                <div id="achievements-container">
+                    {% for achievement in portfolio.achievements %}
+                    <div class="achievement-item">
+                        <input type="text" class="form-control" name="achievements[]" value="{{ achievement }}" required>
+                        <button type="button" class="btn btn-danger remove-item-btn" onclick="removeAchievement(this)">Remove Achievement</button>
+                    </div>
+                    {% endfor %}
+                </div>
+                <button type="button" class="btn add-item-btn" onclick="addAchievement()">Add Achievement</button>
+            </div>
+
+            <div class="form-group">
+                <label for="resume">Resume (PDF, DOC, DOCX)</label>
+                <input type="file" class="form-control" id="resume" name="resume" accept=".pdf,.doc,.docx">
+                {% if portfolio.resume_filename %}
+                <p>Current resume: {{ portfolio.resume_filename }}</p>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="change_title">Change Description (optional)</label>
+                <input type="text" class="form-control" id="change_title" name="change_title" placeholder="Brief description of changes">
+            </div>
+
+            <button type="submit" class="btn">Update Portfolio</button>
+        </form>
+    </div>
+
+    <script>
+        function addProject() {
+            const container = document.getElementById('projects-container');
+            const projectDiv = document.createElement('div');
+            projectDiv.className = 'project-item';
+            projectDiv.innerHTML = `
+                <input type="text" class="form-control" name="project_title[]" placeholder="Project Title" required>
+                <textarea class="form-control" name="project_description[]" placeholder="Project Description" required></textarea>
+                <input type="text" class="form-control" name="project_technologies[]" placeholder="Technologies (comma-separated)" required>
+                <input type="text" class="form-control" name="project_image[]" placeholder="Image URL" required>
+                <button type="button" class="btn btn-danger remove-item-btn" onclick="removeProject(this)">Remove Project</button>
+            `;
+            container.appendChild(projectDiv);
+        }
+
+        function removeProject(button) {
+            button.parentElement.remove();
+        }
+
+        function addAchievement() {
+            const container = document.getElementById('achievements-container');
+            const achievementDiv = document.createElement('div');
+            achievementDiv.className = 'achievement-item';
+            achievementDiv.innerHTML = `
+                <input type="text" class="form-control" name="achievements[]" placeholder="Achievement" required>
+                <button type="button" class="btn btn-danger remove-item-btn" onclick="removeAchievement(this)">Remove Achievement</button>
+            `;
+            container.appendChild(achievementDiv);
+        }
+
+        function removeAchievement(button) {
+            button.parentElement.remove();
+        }
+    </script>
+</body>
+</html>

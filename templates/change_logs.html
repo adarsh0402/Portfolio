@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Change Logs</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .logs-container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .log-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .log-table th,
+        .log-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .log-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+
+        .log-table tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .restore-btn {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .restore-btn:hover {
+            background-color: #218838;
+        }
+
+        .flash-messages {
+            margin-bottom: 1rem;
+        }
+
+        .flash-message {
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 4px;
+        }
+
+        .flash-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .flash-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .log-details {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .log-title {
+            font-weight: bold;
+            color: #007bff;
+        }
+
+        .current-version {
+            background-color: #e8f4ff;
+        }
+
+        .restore-form {
+            display: inline;
+        }
+
+        .no-logs {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-content">
+            <div class="logo">
+                <a href="{{ url_for('home') }}">Portfolio</a>
+            </div>
+            <ul class="nav-links">
+                <li><a href="{{ url_for('home') }}#about">About</a></li>
+                <li><a href="{{ url_for('home') }}#projects">Projects</a></li>
+                <li><a href="{{ url_for('home') }}#skills">Skills</a></li>
+                <li><a href="{{ url_for('home') }}#contact">Contact</a></li>
+                <li><a href="{{ url_for('update_portfolio') }}">Update Portfolio</a></li>
+                <li><a href="{{ url_for('change_logs') }}">Change Logs</a></li>
+                <li><a href="{{ url_for('admin_logout') }}">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h2>Portfolio Change Logs</h2>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-container">
+                    {% for category, message in messages %}
+                        <div class="flash-message flash-{{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <div class="logs-container">
+            {% if logs %}
+                <table class="log-table">
+                    <thead>
+                        <tr>
+                            <th>Version</th>
+                            <th>Date</th>
+                            <th>Change Description</th>
+                            <th>Details</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs %}
+                            <tr {% if loop.first %}class="current-version"{% endif %}>
+                                <td>v{{ logs|length - loop.index0 }}</td>
+                                <td>{{ log.change_date }}</td>
+                                <td class="log-title">
+                                    {% if log.change_title %}
+                                        {{ log.change_title }}
+                                    {% else %}
+                                        Portfolio Update
+                                    {% endif %}
+                                </td>
+                                <td class="log-details">
+                                    <strong>Title:</strong> {{ log.details.title }}<br>
+                                    <strong>Projects:</strong> {{ log.details.projects|length }} projects<br>
+                                    <strong>Resume:</strong> 
+                                    {% if log.details.resume_filename %}
+                                        {{ log.details.resume_filename }}
+                                    {% else %}
+                                        No resume
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if not loop.first %}
+                                        <form class="restore-form" action="{{ url_for('restore_portfolio', log_id=log.log_id) }}" method="POST">
+                                            <button type="submit" class="restore-btn" onclick="return confirm('Are you sure you want to restore this version?')">
+                                                Restore Version
+                                            </button>
+                                        </form>
+                                    {% else %}
+                                        <span class="current-label">Current Version</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div class="no-logs">
+                    <p>No change logs available.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>
